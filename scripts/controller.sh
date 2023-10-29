@@ -28,7 +28,7 @@ License=$(
 EOLICENSE
 )
 
-VERSION="2.3.10-DEV"
+VERSION="2.3.11-DEV"
 
 set -e
 
@@ -852,6 +852,42 @@ log_message() {
     fi
 }
 
+to_human_readable() {
+    local string="$1"
+
+    # Extract the first logic text and replace underscores
+    logic_text=$(echo $string | cut -d' ' -f1 | sed 's/_/ /g' | sed 's/_integer//g')
+
+    # Extract the comparison texts and their values, replace underscores and remove "_integer"
+    comp1_text=$(echo $string | awk -F'&& ' '{print $2}' | cut -d' ' -f1 | sed 's/_/ /g' | sed 's/_integer//g')
+    comp1_val=$(echo $string | sed -n "s/.*$comp1_text (\([0-9]*\)).*/\1/p")
+
+    comp2_text=$(echo $string | awk -F'&& ' '{print $2}' | cut -d' ' -f4 | sed 's/_/ /g' | sed 's/_integer//g')
+    comp2_val=$(echo $string | sed -n "s/.*$comp2_text (\([0-9]*\)).*/\1/p")
+
+    # Handle the additional operation (+ energy_fee_integer) if present
+    if [[ $string == *"+ energy_fee_integer"* ]]; then
+        energy_fee_val=$(echo $string | sed -n 's/.*energy_fee_integer (\([0-9]*\)).*/\1/p')
+        comp2_val=$((comp2_val + energy_fee_val))
+    fi
+
+    # Create the human-readable text
+    local result="$logic_text"
+
+    if [[ "$comp1_val" -gt "$comp2_val" ]]; then
+        result="$result, $comp1_text is greater than $comp2_text"
+    elif [[ "$comp1_val" -lt "$comp2_val" ]]; then
+        result="$result, $comp1_text is less than $comp2_text"
+    elif [[ "$comp1_val" -eq "$comp2_val" ]]; then
+        result="$result, $comp1_text is equal to $comp2_text"
+    else
+        result="$result, $comp1_text and $comp2_text are not equal"
+    fi
+
+    # Return the human-readable text
+    echo "$result"
+}
+
 exit_with_cleanup() {
     log_message "I: Cleanup and exit with error $1"
     manage_charging "off" "Turn off charging."
@@ -1175,6 +1211,10 @@ charging_conditions=(
 
 # Check if any charging condition is met
 evaluate_conditions charging_conditions[@] charging_descriptions[@] "execute_charging" "charging_condition_met"
+if [ -n "$charging_condition_met" ]; then
+    result=$(to_human_readable "$charging_condition_met")
+    log_message "I: $result"
+fi
 
 # Indexed arrays for descriptions:
 switchablesockets_conditions_descriptions=(
@@ -1201,6 +1241,10 @@ switchablesockets_conditions=(
 )
 # Check if any switching condition is met
 evaluate_conditions switchablesockets_conditions[@] switchablesockets_conditions_descriptions[@] "execute_switchablesockets_on" "switchablesockets_condition_met"
+if [ -n "$switchablesockets_condition_met" ]; then
+    result=$(to_human_readable "$switchablesockets_condition_met")
+    log_message "I: $result"
+fi
 
 if ((use_solarweather_api_to_abort == 1)); then
     check_abort_condition $((abort_suntime <= suntime_today)) "There are enough sun minutes today."

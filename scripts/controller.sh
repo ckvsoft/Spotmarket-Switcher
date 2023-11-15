@@ -1219,11 +1219,6 @@ charging_conditions=(
 # Check if any charging condition is met
 evaluate_conditions charging_conditions[@] charging_descriptions[@] "execute_charging" "charging_condition_met"
 if [ -n "$charging_condition_met" ]; then
-    result=$(to_human_readable "$charging_condition_met")
-    log_message "I: $result"
-fi
-
-if [ -n "$charging_condition_met" ]; then
     log_message "I: $charging_condition_met."
 fi
 
@@ -1252,11 +1247,6 @@ switchablesockets_conditions=(
 )
 # Check if any switching condition is met
 evaluate_conditions switchablesockets_conditions[@] switchablesockets_conditions_descriptions[@] "execute_switchablesockets_on" "switchablesockets_condition_met"
-if [ -n "$switchablesockets_condition_met" ]; then
-    result=$(to_human_readable "$switchablesockets_condition_met")
-    log_message "I: $result"
-fi
-
 if [ -n "$switchablesockets_condition_met" ]; then
     log_message "I: $switchablesockets_condition_met."
 fi

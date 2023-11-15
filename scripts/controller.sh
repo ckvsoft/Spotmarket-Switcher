@@ -28,7 +28,7 @@ License=$(
 EOLICENSE
 )
 
-VERSION="2.3.11"
+VERSION="2.3.12-DEV"
 
 set -e
 
@@ -713,6 +713,11 @@ check_abort_condition() {
 manage_fritz_sockets() {
     local action=$1
 
+    if [ "$execute_switchablesockets_on" -eq 0 ]; then
+        log_message "I: execute_switchablesockets_on is 0. Exiting manage_fritz_sockets."
+        return
+    fi
+
     [ "$action" != "off" ] && action=$([ "$execute_switchablesockets_on" == "1" ] && echo "on" || echo "off")
 
     if fritz_login; then
@@ -759,6 +764,11 @@ fritz_login() {
 # Function to manage shelly and log a message
 manage_shelly_sockets() {
     local action=$1
+
+    if [ "$execute_switchablesockets_on" -eq 0 ]; then
+        log_message "I: execute_switchablesockets_on is 0. Exiting manage_shelly_sockets."
+        return
+    fi
 
     [ "$action" != "off" ] && action=$([ "$execute_switchablesockets_on" == "1" ] && echo "on" || echo "off")
 
@@ -1213,6 +1223,10 @@ if [ -n "$charging_condition_met" ]; then
     log_message "I: $result"
 fi
 
+if [ -n "$charging_condition_met" ]; then
+    log_message "I: $charging_condition_met."
+fi
+
 # Indexed arrays for descriptions:
 switchablesockets_conditions_descriptions=(
     "switchablesockets_at_start_stop ($switchablesockets_at_start_stop) == 1 && start_price_integer ($start_price_integer) > current_price_integer ($current_price_integer)"
@@ -1241,6 +1255,10 @@ evaluate_conditions switchablesockets_conditions[@] switchablesockets_conditions
 if [ -n "$switchablesockets_condition_met" ]; then
     result=$(to_human_readable "$switchablesockets_condition_met")
     log_message "I: $result"
+fi
+
+if [ -n "$switchablesockets_condition_met" ]; then
+    log_message "I: $switchablesockets_condition_met."
 fi
 
 if ((use_solarweather_api_to_abort == 1)); then

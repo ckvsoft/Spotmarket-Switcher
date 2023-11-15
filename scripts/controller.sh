@@ -28,7 +28,7 @@ License=$(
 EOLICENSE
 )
 
-VERSION="2.3.11"
+VERSION="2.3.12-DEV"
 
 set -e
 
